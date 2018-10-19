@@ -1,0 +1,7 @@
+
+        <additional>
+            <edgeData id="1" file="../../output/edgeData0.xml" begin="0" end="28800" excludeEmpty="true"/>
+            <edgeData id="2" file="../../output/edgeData0.xml" begin="28800" end="57600" excludeEmpty="true"/>
+            <edgeData id="3" file="../../output/edgeData0.xml" begin="57600" end="86400" excludeEmpty="true"/>
+        </additional>
+        
