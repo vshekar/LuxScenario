@@ -5,13 +5,14 @@ import json
 import time
 from collections import defaultdict
 import os.path
+import os
 
 class SumoSim():
     
     SUMOBIN = 'sumo'
     def __init__(self, disrupted, lmbd, start_time, end_time, filename, rank):
         self.vehroutes_path = "../output/temp_routes/vehroutes{}.xml".format(rank)
-        self.SUMOCMD = [self.SUMOBIN, "-c", "../scenario/dua.static.sumocfg",
+        self.SUMOCMD = [self.SUMOBIN, "-c", "/home/vs57d/LuxScenario/scenario/dua.static.sumocfg",
                         "--time-to-teleport", "300", "--vehroute-output", self.vehroutes_path,
                         "--vehroute-output.exit-times", "true", "--ignore-route-errors", "-v",
                         "false", "-W", "true", "--additional-files", """../scenario/vtypes.add.xml,
@@ -40,11 +41,11 @@ class SumoSim():
         f = open(add_file, 'w')
         f.write("""
         <additional>
-            <edgeData id="1" file="../../output/edgeData{0}.xml" begin="0" end="28800" excludeEmpty="true"/>
-            <edgeData id="2" file="../../output/edgeData{0}.xml" begin="28800" end="57600" excludeEmpty="true"/>
-            <edgeData id="3" file="../../output/edgeData{0}.xml" begin="57600" end="86400" excludeEmpty="true"/>
+            <edgeData id="1" file="../../output/edgeData_{0}_{1}_{2}_{3}.xml" begin="0" end="28800" excludeEmpty="true"/>
+            <edgeData id="2" file="../../output/edgeData_{0}_{1}_{2}_{3}.xml" begin="28800" end="57600" excludeEmpty="true"/>
+            <edgeData id="3" file="../../output/edgeData_{0}_{1}_{2}_{3}.xml" begin="57600" end="86400" excludeEmpty="true"/>
         </additional>
-        """.format(rank))
+        """.format(disrupted, lmbd, start_time, end_time))
         f.close()
 
         print("Setting up simulation")
@@ -85,24 +86,28 @@ class SumoSim():
                 traci.lane.setDisallowed(laneID, [])
 
     def write_to_file(self):
-        data = {}
+        #data = {}
         tree = ET.parse(self.vehroutes_path)
         root = tree.getroot()
+        data = []
         for vehicle in root:
-            if vehicle[0].tag == 'route':
-                edges = vehicle[0].attrib['edges']
-                exitTimes = vehicle[0].attrib['exitTimes']
-            elif vehicle[0].tag == 'routeDistribution':
-                edges = vehicle[0][-1].attrib['edges']
-                exitTimes = vehicle[0][-1].attrib['exitTimes']
-            data[vehicle.attrib['id']] = {"traveltime": float(vehicle.attrib['arrival']) - float(vehicle.attrib['depart']),
-                                          "edges": edges,
-                                          "exitTimes": exitTimes}
+            #if vehicle[0].tag == 'route':
+            #    edges = vehicle[0].attrib['edges']
+            #    exitTimes = vehicle[0].attrib['exitTimes']
+            #elif vehicle[0].tag == 'routeDistribution':
+            #    edges = vehicle[0][-1].attrib['edges']
+            #    exitTimes = vehicle[0][-1].attrib['exitTimes']
+            #data[vehicle.attrib['id']] = (float(vehicle.attrib['arrival']) , float(vehicle.attrib['depart']))
+            data.append((vehicle.attrib['id'], float(vehicle.attrib['arrival']), float(vehicle.attrib['depart'])))
+            #"edges": edges,
+            #"exitTimes": exitTimes}
 
-        data['sim_time'] = self.sim_end - self.sim_start
+        #data['sim_time'] = self.sim_end - self.sim_start
+        data.append(('sim_time', float(self.sim_start), float(self.sim_end)))
         
         with open(self.filename, 'w') as outfile:
             json.dump(data, outfile)
+        os.remove(self.vehroutes_path)
 
 if __name__=="__main__":
     edge = u'--30256#0'
