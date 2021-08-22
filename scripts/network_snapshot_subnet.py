@@ -37,6 +37,7 @@ class SumoSim():
                         "--additional-files",
                         """{1}/vtypes.add_{0}.xml, {1}/busstops.add_{0}.xml, {1}/lust.poly_{0}.xml, {1}/tll.static_{0}.xml, {1}/additional_{0}.xml""".format(rank, str(self.config_path)),
                         ]
+        print('RUNNING COMMAND: {0}'.format(self.SUMOCMD), file=sys.stderr)
         #print("*********************************************************")
         #print("Simulation Details: \n Disrupted link: {} \n Lambda: {} \n Start - End time: {} - {}".format(disrupted, lmbd, start_time, end_time))
         #print("Initializing")
@@ -129,7 +130,8 @@ class SumoSim():
         traci.close()
 
     def run_sim(self):
-        print('RUNNING COMMAND: {0}'.format(self.SUMOCMD))
+        #print('RUNNING COMMAND: {0}'.format(self.SUMOCMD))
+        
         while True:
             try:
                 PORT = sumolib.miscutils.getFreeSocketPort()
