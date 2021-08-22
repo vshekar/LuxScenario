@@ -161,11 +161,11 @@ def start_sim():
             start_time, end_time = times.split('_')
             start_time, end_time = int(start_time), int(end_time)
             filename = ''
-            shutil.copy2('../scenario/dua.actuated.sumocfg', '../scenario/copies/dua.actuated_{}.sumocfg'.format(rank))
-            shutil.copy2('../scenario/vtypes.add.xml', '../scenario/copies/vtypes.add_{}.xml'.format(rank))
-            shutil.copy2('../scenario/busstops.add.xml', '../scenario/copies/busstops.add_{}.xml'.format(rank))
-            shutil.copy2('../scenario/lust.poly.xml', '../scenario/copies/lust.poly_{}.xml'.format(rank))
-            shutil.copy2('../scenario/tll.static.xml', '../scenario/copies/tll.static_{}.xml'.format(rank))
+            shutil.copy('../scenario/dua.actuated.sumocfg', '../scenario/copies/dua.actuated_{}.sumocfg'.format(rank))
+            shutil.copy('../scenario/vtypes.add.xml', '../scenario/copies/vtypes.add_{}.xml'.format(rank))
+            shutil.copy('../scenario/busstops.add.xml', '../scenario/copies/busstops.add_{}.xml'.format(rank))
+            shutil.copy('../scenario/lust.poly.xml', '../scenario/copies/lust.poly_{}.xml'.format(rank))
+            shutil.copy('../scenario/tll.static.xml', '../scenario/copies/tll.static_{}.xml'.format(rank))
 
             try:
                 ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
