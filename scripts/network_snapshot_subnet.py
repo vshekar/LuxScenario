@@ -95,14 +95,22 @@ class SumoSim():
         disruptedEdge = self.network.getEdge(self.disrupted)
         #sources = [edge.getID() for edge in list(disruptedEdge.getIncoming().keys())]
         #dests = [edge.getID() for edge in list(disruptedEdge.getOutgoing().keys())]
-        to_node = disruptedEdge.getToNode()
-        from_node = disruptedEdge.getFromNode()
-        dests = [edge.getID() for edge in list(to_node.getIncoming())] + \
-                        [edge.getID() for edge in list(to_node.getOutgoing())]
-        sources = [edge.getID() for edge in list(from_node.getIncoming())] + \
-                        [edge.getID() for edge in list(from_node.getOutgoing())]
+        with open('min_subnet.json', 'r') as f:
+            min_lambda = json.load(f)
 
-        rerouter.set('edges', ' '.join(sources + dests))
+        if disruptedEdge.getID() in min_lambda:
+            reroute_edges = self.net_graph.getSubnet(disruptedEdge, min_lambda[disruptedEdge.getID()])
+        else:
+            print('Edge {0} not found in min_lambda'.format(disruptedEdge.getID()))
+            to_node = disruptedEdge.getToNode()
+            from_node = disruptedEdge.getFromNode()
+            dests = [edge.getID() for edge in list(to_node.getIncoming())] + \
+                            [edge.getID() for edge in list(to_node.getOutgoing())]
+            sources = [edge.getID() for edge in list(from_node.getIncoming())] + \
+                            [edge.getID() for edge in list(from_node.getOutgoing())]
+            reroute_edges = sources + dests
+
+        rerouter.set('edges', ' '.join(reroute_edges))
         #rerouter.set('edges', '1_1')
         interval.append(closing_reroute)
         rerouter.append(interval)

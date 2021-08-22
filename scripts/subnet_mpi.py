@@ -20,7 +20,9 @@ sim_complete = 0
 
 network = sumolib.net.readNet('../scenario/lust.net.xml')
 edges = network.getEdges()
-edgeIDs = [edge.getID() for edge in edges if edge.getLaneNumber()>2]
+with open('min_subnet.json', 'r') as f:
+    edgeIDs = list(json.load(f).keys())
+#edgeIDs = [edge.getID() for edge in edges if edge.getLaneNumber()>2]
 time_intervals = [(0,10), (0, 28800), (28800, 57600), (57600, 86400)]
 total_processors = 1001
 TERMINATE = 0
