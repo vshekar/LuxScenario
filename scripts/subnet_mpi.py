@@ -95,6 +95,21 @@ def update_file():
         if dataset_name not in f:
             group.create_dataset(str(data.lmbd), data=data.get_dataframe())
         f.close()
+        
+        # Update completed_sims.json
+        with open('completed_sims.json','r') as f:
+            completed = json.load(f)
+        key = 'lux_scenario/{}/{}'.format(str(data.start_time)+'_'+str(data.end_time), data.edge)
+        if key in completed:
+            completed[key].append(data.lmbd)
+        else:
+            completed[key] = [data.lmbd]
+        with open('completed_sims.json','w') as f:
+            completed = json.dump(completed, f)
+
+
+        
+
         del running_sims[rnk]
         if len(remaining_sims) > 0:
             sim_data = remaining_sims.pop()
