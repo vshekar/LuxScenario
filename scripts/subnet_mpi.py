@@ -21,7 +21,7 @@ network = sumolib.net.readNet('../scenario/lust.net.xml')
 edges = network.getEdges()
 edgeIDs = [edge.getID() for edge in edges if edge.getLaneNumber()>2]
 time_intervals = [(0, 28800), (28800, 57600), (57600, 86400)]
-total_processors = 1001
+total_processors = 11
 TERMINATE = 0
 SIM_DATA = 1
 WAIT = 2
@@ -39,6 +39,7 @@ def start():
 
 def start_writer():
     """ Setup writer process """
+    print('Setting up writer')
     setup_hdf5()
     init_sims()
     
@@ -135,6 +136,7 @@ def get_remaining_sims():
 
 
 def start_sim():
+    print('Starting Sim Rank = {0}'.format(rank))
     tag = WAIT
 
     while tag != TERMINATE:

@@ -99,7 +99,7 @@ class SumoSim():
         rerouter.append(interval)
         xmlRoot.append(rerouter)
 
-        tree.write('../config/generated_configs/additional_{0}.xml'.format(self.rank))
+        tree.write(add_file)
 
 
     def run(self):
