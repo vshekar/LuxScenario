@@ -54,6 +54,7 @@ class SumoSim():
         
         #print("Setting up additional file")
         self.get_subnetwork()
+        self.setup_additional_file()
 
         #print("Setting up simulation")
         self.setup_sim()
@@ -128,10 +129,15 @@ class SumoSim():
         self.step = 0
 
         #while traci.simulation.getMinExpectedNumber() > 0:
-        while self.step < 86400:
+        #Simulate for 30 hours
+        while self.step < 108000:
             self.disrupt_links()
             traci.simulationStep()
             self.step += 1
+            if self.step  in [self.end_time+30, self.start_time+30, 30, 28830, 57630, 86430]:
+                for edge in self.subnetwork_edges:
+                    for veh in traci.edge.getLastStepVehicleIDs(edge):
+                        traci.vehicle.rerouteTraveltime(veh)
             
         traci.close()
 
