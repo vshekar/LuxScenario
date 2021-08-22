@@ -8,5 +8,5 @@
 #BSUB -o %J.out
 #BSUB -R rusage[mem=8192]
 
-
+source ~/.bashrc
 mpirun -n 1001 python3 subnet_mpi.py
