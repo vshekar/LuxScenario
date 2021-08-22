@@ -89,13 +89,13 @@ def update_file():
                       data.edge, 
                       type(data.get_dataframe()), data.get_dataframe().shape))
         group_name = '/lux_scenario/{}_{}/{}'.format(data.start_time, data.end_time, data.edge)
-        group = f.get(group_name)
+        group = f.require_group(group_name)
         dataset_name = group_name + '/{}'.format(data.lmbd)
         #if '/lux_scenario/{}_{}/{}/{}'.format(data.start_time, data.end_time, data.edge, data.lmbd) not in f:
         if dataset_name not in f:
             group.create_dataset(str(data.lmbd), data=data.get_dataframe())
         f.close()
-        
+
         # Update completed_sims.json
         with open('completed_sims.json','r') as f:
             completed = json.load(f)
