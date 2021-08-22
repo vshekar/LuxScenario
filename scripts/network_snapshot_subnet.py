@@ -25,7 +25,7 @@ class SumoSim():
         self.writer = writer_rank
         self.vehroutes_path = "/project/umd_lance_fiondella/sumo_output/temp_routes/vehroutes{}.xml".format(rank)
         self.SUMOCMD = [self.SUMOBIN, "-c", "../scenario/copies/dua.actuated_{}.sumocfg".format(rank),
-                        "--time-to-teleport", "3600", "--vehroute-output", self.vehroutes_path,
+                        "--time-to-teleport", "1200", "--vehroute-output", self.vehroutes_path,
                         "--vehroute-output.exit-times", "true", "--ignore-route-errors", "-v",
                         "false", "-W", "true", "--no-step-log",
                         "--additional-files",
@@ -50,9 +50,17 @@ class SumoSim():
             self.nominal = False
 
         self.lmbd = lmbd
+        self.rank = rank
         
         #print("Setting up additional file")
-        add_file = "../scenario/additional/additional{}.xml".format(rank)
+        self.get_subnetwork()
+
+        #print("Setting up simulation")
+        self.setup_sim()
+        #print("Total number of trips: {}".format(len(self.new_demand_route)))
+
+    def setup_additional_file(self):
+        add_file = "../scenario/additional/additional{}.xml".format(self.rank)
         f = open(add_file, 'w')
         f.write("""
         <additional>
@@ -60,14 +68,38 @@ class SumoSim():
             <edgeData id="2" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="28800" end="57600" excludeEmpty="true"/>
             <edgeData id="3" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="57600" end="86400" excludeEmpty="true"/>
         </additional>
-        """.format(disrupted, lmbd, start_time, end_time))
+        """.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
         f.close()
 
-        self.get_subnetwork()
+        tree = ET.parse(add_file)
+        xmlRoot = tree.getroot()
+        rerouter = ET.Element("rerouter")
+        interval = ET.Element("interval")
+        closing_reroute = ET.Element("closingReroute")
 
-        #print("Setting up simulation")
-        self.setup_sim()
-        #print("Total number of trips: {}".format(len(self.new_demand_route)))
+        closing_reroute.set('id', str(self.disrupted))
+        closing_reroute.set('disallow', 'passenger')
+        interval.set('begin', str(self.start_time))
+        interval.set('end', str(self.end_time))
+        rerouter.set('id', '1')
+        
+        disruptedEdge = self.network.getEdge(self.disrupted)
+        #sources = [edge.getID() for edge in list(disruptedEdge.getIncoming().keys())]
+        #dests = [edge.getID() for edge in list(disruptedEdge.getOutgoing().keys())]
+        to_node = disruptedEdge.getToNode()
+        from_node = disruptedEdge.getFromNode()
+        dests = [edge.getID() for edge in list(to_node.getIncoming())] + \
+                        [edge.getID() for edge in list(to_node.getOutgoing())]
+        sources = [edge.getID() for edge in list(from_node.getIncoming())] + \
+                        [edge.getID() for edge in list(from_node.getOutgoing())]
+
+        rerouter.set('edges', ' '.join(sources + dests))
+        #rerouter.set('edges', '1_1')
+        interval.append(closing_reroute)
+        rerouter.append(interval)
+        xmlRoot.append(rerouter)
+
+        tree.write(f'../config/generated_configs/additional_{self.rank}.xml')
 
 
     def run(self):
@@ -143,6 +175,7 @@ class SumoSim():
         
         print("Process {} starting closed file, now deleting".format(rank), file=sys.stderr)
         os.remove(self.vehroutes_path)
+        os.remove('/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml'.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
         print("Process {} deleted file, exiting".format(rank), file=sys.stderr)
 
     def setup_sim(self):
@@ -202,7 +235,7 @@ class SumoSim():
 
     def setup_trips(self):
        for vehicle in self.new_demand_route:
-
+           """
            if len(self.new_demand_route[vehicle]) > 1 and self.disrupted in self.new_demand_route[vehicle]:
                if self.disrupted != self.new_demand_route[vehicle][0] and self.disrupted != self.new_demand_route[vehicle][-1]:
                    traci.route.add(vehicle+'_route', [self.new_demand_route[vehicle][0], self.new_demand_route[vehicle][-1]])
@@ -223,6 +256,14 @@ class SumoSim():
                    continue 
            else:
                traci.route.add(vehicle + '_route', self.new_demand_route[vehicle])
+           """
+           
+           if self.new_demand_route[vehicle][0] == self.disrupted:
+                if self.start_time <= self.new_demand_depart[vehicle] and self.new_demand_depart[vehicle] <= self.end_time:
+                    self.new_demand_depart[vehicle] = self.end_time+1
+            
+           traci.route.add(vehicle + '_route', self.new_demand_route[vehicle])
+
            try:
                traci.vehicle.add(vehicle, vehicle+'_route', depart= str(self.new_demand_depart[vehicle]),
                                  typeID=str(self.new_demand_vehicle_type[vehicle]))
