@@ -1,10 +1,12 @@
 #!/bin/bash
 
 #BSUB -J sumo_sim
-#BSUB -n 100
+#BSUB -n 1001
 #BSUB -q long 
-#BSUB -W 24:00
+#BSUB -W 72:00
 #BSUB -e %J.err
-#BSUB -R rusage[mem=4096]
+#BSUB -o %J.out
+#BSUB -R rusage[mem=8192]
 
-mpirun -n 100 python mpi_run.py
+
+mpirun -n 1001 python3 subnet_mpi.py

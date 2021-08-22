@@ -6,6 +6,11 @@ import time
 from collections import defaultdict
 import os.path
 import os
+from data_wrapper import Data
+
+
+SIM_DATA = 1
+PROCESS_COMPLETE = 2
 
 class SumoSim():
     
@@ -90,6 +95,8 @@ class SumoSim():
         tree = ET.parse(self.vehroutes_path)
         root = tree.getroot()
         data = []
+        df = Data(self.lmbd, self.start_time, self.end_time, self.disrupted)
+
         for vehicle in root:
             #if vehicle[0].tag == 'route':
             #    edges = vehicle[0].attrib['edges']
@@ -98,15 +105,18 @@ class SumoSim():
             #    edges = vehicle[0][-1].attrib['edges']
             #    exitTimes = vehicle[0][-1].attrib['exitTimes']
             #data[vehicle.attrib['id']] = (float(vehicle.attrib['arrival']) , float(vehicle.attrib['depart']))
-            data.append((vehicle.attrib['id'], float(vehicle.attrib['arrival']), float(vehicle.attrib['depart'])))
+            data.append((vehicle.attrib['id'], int(float(vehicle.attrib['arrival'])), int(float(vehicle.attrib['depart']))))
             #"edges": edges,
             #"exitTimes": exitTimes}
 
         #data['sim_time'] = self.sim_end - self.sim_start
         data.append(('sim_time', float(self.sim_start), float(self.sim_end)))
+        df.dataframe = data
         
-        with open(self.filename, 'w') as outfile:
-            json.dump(data, outfile)
+        #with open(self.filename, 'w') as outfile:
+        #    json.dump(data, outfile)
+        req1 = comm.isend(df, dest=100, tag=SIM_DATA)
+        #req2 = comm.isend(True, dest=2, tag=2)
         os.remove(self.vehroutes_path)
 
 if __name__=="__main__":
