@@ -11,6 +11,7 @@ import json
 import traci
 import shutil
 import datetime
+from pathlib import Path
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -107,9 +108,6 @@ def update_file():
         with open('completed_sims.json','w') as f:
             completed = json.dump(completed, f)
 
-
-        
-
         del running_sims[rnk]
         if len(remaining_sims) > 0:
             sim_data = remaining_sims.pop()
@@ -153,6 +151,10 @@ def get_remaining_sims():
 def start_sim():
     print('Starting Sim Rank = {0}'.format(rank))
     tag = WAIT
+    base_path = Path('/project/umd_lance_fiondella')
+    output_path = base_path / 'sumo_output'
+    config_path = base_path / 'config'
+    scenario_path = '/home/vs57d/LuxScenario/scenario/'
 
     while tag != TERMINATE:
         status = MPI.Status()
@@ -160,8 +162,6 @@ def start_sim():
         tag = status.Get_tag()
         if tag == SIM_DATA:
             sim, lmbd = data
-
-
             net_graph = Graph()
         
             #completed = json.load(open('completed_sims.json'))
@@ -176,11 +176,11 @@ def start_sim():
             start_time, end_time = times.split('_')
             start_time, end_time = int(start_time), int(end_time)
             filename = ''
-            shutil.copy('../scenario/dua.actuated.sumocfg', '../scenario/copies/dua.actuated_{}.sumocfg'.format(rank))
-            shutil.copy('../scenario/vtypes.add.xml', '../scenario/copies/vtypes.add_{}.xml'.format(rank))
-            shutil.copy('../scenario/busstops.add.xml', '../scenario/copies/busstops.add_{}.xml'.format(rank))
-            shutil.copy('../scenario/lust.poly.xml', '../scenario/copies/lust.poly_{}.xml'.format(rank))
-            shutil.copy('../scenario/tll.static.xml', '../scenario/copies/tll.static_{}.xml'.format(rank))
+            shutil.copy(scenario_path+'dua.actuated.sumocfg', str(config_path / 'dua.actuated_{}.sumocfg'.format(rank)))
+            shutil.copy(scenario_path+'vtypes.add.xml', str(config_path / 'vtypes.add_{}.xml'.format(rank)))
+            shutil.copy(scenario_path+'busstops.add.xml', str(config_path / 'busstops.add_{}.xml'.format(rank)))
+            shutil.copy(scenario_path+'lust.poly.xml', str(config_path / 'lust.poly_{}.xml'.format(rank)))
+            shutil.copy(scenario_path+'tll.static.xml', str(config_path / 'tll.static_{}.xml'.format(rank)))
 
             try:
                 ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
@@ -194,12 +194,7 @@ def start_sim():
             tag = WAIT        
         elif tag == TERMINATE:
             print("Terminate tag received, exiting.")    
-
-
-                    
     #req2 = comm.send(True, dest=total_processors-1, tag=PROCESS_COMPLETE)
-
-
 
 
 if __name__=="__main__":

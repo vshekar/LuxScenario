@@ -12,6 +12,7 @@ from mpi4py import MPI
 import sys
 from sumolib.miscutils import getFreeSocketPort
 import traceback
+from pathlib import Path
 
 SIM_DATA = 1
 PROCESS_COMPLETE = 2
@@ -19,22 +20,28 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 class SumoSim():
+    base_path = Path('/project/umd_lance_fiondella')
+    output_path = base_path / 'sumo_output'
+    config_path = base_path / 'config'
+    network_path = Path('/home/vs57d/LuxScenario/scenario/lust.net.xml')
     
     SUMOBIN = 'sumo'
     def __init__(self, disrupted, lmbd, start_time, end_time, filename, rank, net_graph, writer_rank):
         self.writer = writer_rank
-        self.vehroutes_path = "/project/umd_lance_fiondella/sumo_output/temp_routes/vehroutes{}.xml".format(rank)
-        self.SUMOCMD = [self.SUMOBIN, "-c", "../scenario/copies/dua.actuated_{}.sumocfg".format(rank),
+        #self.vehroutes_path = "/project/umd_lance_fiondella/sumo_output/temp_routes/vehroutes_{}.xml".format(rank)
+        self.vehroutes_path = str(self.output_path / 'temp_routes' / 'vehroutes_{}.xml'.format(rank))
+        self.SUMOCMD = [self.SUMOBIN, "-c", str(self.config_path / "/dua.actuated_{}.sumocfg".format(rank)),
                         "--time-to-teleport", "1200", "--vehroute-output", self.vehroutes_path,
                         "--vehroute-output.exit-times", "true", "--ignore-route-errors", "-v",
                         "false", "-W", "true", "--no-step-log",
                         "--additional-files",
-                        """../scenario/copies/vtypes.add_{0}.xml, ../scenario/copies/busstops.add_{0}.xml, ../scenario/copies/lust.poly_{0}.xml, ../scenario/copies/tll.static_{0}.xml, ../scenario/additional/additional{0}.xml""".format(rank),
+                        """{1}/vtypes.add_{0}.xml, {1}/busstops.add_{0}.xml, {1}/lust.poly_{0}.xml, {1}/tll.static_{0}.xml, {1}/additional_{0}.xml""".format(rank, str(self.config_path)),
                         ]
         #print("*********************************************************")
         #print("Simulation Details: \n Disrupted link: {} \n Lambda: {} \n Start - End time: {} - {}".format(disrupted, lmbd, start_time, end_time))
         #print("Initializing")
-        self.network = sumolib.net.readNet('../scenario/lust.net.xml')
+        #self.network = sumolib.net.readNet('../scenario/lust.net.xml')
+        self.network = sumolib.net.readNet(str(self.network_path))
         self.net_graph = net_graph
         self.filename = filename
 
@@ -61,13 +68,14 @@ class SumoSim():
         #print("Total number of trips: {}".format(len(self.new_demand_route)))
 
     def setup_additional_file(self):
-        add_file = "../scenario/additional/additional{}.xml".format(self.rank)
+        #add_file = "../scenario/additional/additional_{}.xml".format(self.rank)
+        add_file = "{1}/additional_{0}.xml".format(rank, str(self.config_path))
         f = open(add_file, 'w')
         f.write("""
         <additional>
             <edgeData id="1" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="0" end="28800" excludeEmpty="true"/>
             <edgeData id="2" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="28800" end="57600" excludeEmpty="true"/>
-            <edgeData id="3" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="57600" end="86400" excludeEmpty="true"/>
+            <edgeData id="3" file="/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml" begin="57600" end="108000" excludeEmpty="true"/>
         </additional>
         """.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
         f.close()
@@ -113,6 +121,7 @@ class SumoSim():
         traci.close()
 
     def run_sim(self):
+        print('RUNNING COMMAND: {0}'.format(self.SUMOCMD))
         while True:
             try:
                 PORT = sumolib.miscutils.getFreeSocketPort()
@@ -182,6 +191,7 @@ class SumoSim():
         print("Process {} starting closed file, now deleting".format(rank), file=sys.stderr)
         os.remove(self.vehroutes_path)
         os.remove('/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml'.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
+
         print("Process {} deleted file, exiting".format(rank), file=sys.stderr)
 
     def setup_sim(self):
