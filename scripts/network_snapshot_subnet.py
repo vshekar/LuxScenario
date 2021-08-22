@@ -30,7 +30,7 @@ class SumoSim():
         self.writer = writer_rank
         #self.vehroutes_path = "/project/umd_lance_fiondella/sumo_output/temp_routes/vehroutes_{}.xml".format(rank)
         self.vehroutes_path = str(self.output_path / 'temp_routes' / 'vehroutes_{}.xml'.format(rank))
-        self.SUMOCMD = [self.SUMOBIN, "-c", str(self.config_path / "/dua.actuated_{}.sumocfg".format(rank)),
+        self.SUMOCMD = [self.SUMOBIN, "-c", str(self.config_path / "dua.actuated_{}.sumocfg".format(rank)),
                         "--time-to-teleport", "1200", "--vehroute-output", self.vehroutes_path,
                         "--vehroute-output.exit-times", "true", "--ignore-route-errors", "-v",
                         "false", "-W", "true", "--no-step-log",
