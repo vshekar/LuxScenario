@@ -171,10 +171,10 @@ def start_sim():
         data = comm.recv(status = status)
         tag = status.Get_tag()
         if tag == SIM_DATA:
-            try:
-                setup_and_run(data)
-            except:
-                req1 = comm.send(data, dest=total_processors-1, tag=SIM_FAILED)
+            #try:
+            setup_and_run(data)
+            #except:
+            #    req1 = comm.send(data, dest=total_processors-1, tag=SIM_FAILED)
             tag = WAIT        
         elif tag == TERMINATE:
             print("Terminate tag received, exiting.")    
@@ -201,11 +201,13 @@ def setup_and_run(data):
     start_time, end_time = times.split('_')
     start_time, end_time = int(start_time), int(end_time)
     filename = ''
-    shutil.copy(scenario_path+'dua.actuated.sumocfg', str(config_path / 'dua.actuated_{}.sumocfg'.format(rank)))
-    shutil.copy(scenario_path+'vtypes.add.xml', str(config_path / 'vtypes.add_{}.xml'.format(rank)))
-    shutil.copy(scenario_path+'busstops.add.xml', str(config_path / 'busstops.add_{}.xml'.format(rank)))
-    shutil.copy(scenario_path+'lust.poly.xml', str(config_path / 'lust.poly_{}.xml'.format(rank)))
-    shutil.copy(scenario_path+'tll.static.xml', str(config_path / 'tll.static_{}.xml'.format(rank)))
+    cfg_file_path = config_path / 'dua.actuated_{}.sumocfg'
+    if not cfg_file_path.exists():
+        shutil.copy(scenario_path+'dua.actuated.sumocfg', str(config_path / 'dua.actuated_{}.sumocfg'.format(rank)))
+        shutil.copy(scenario_path+'vtypes.add.xml', str(config_path / 'vtypes.add_{}.xml'.format(rank)))
+        shutil.copy(scenario_path+'busstops.add.xml', str(config_path / 'busstops.add_{}.xml'.format(rank)))
+        shutil.copy(scenario_path+'lust.poly.xml', str(config_path / 'lust.poly_{}.xml'.format(rank)))
+        shutil.copy(scenario_path+'tll.static.xml', str(config_path / 'tll.static_{}.xml'.format(rank)))
 
     try:
         ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
