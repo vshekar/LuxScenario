@@ -28,6 +28,7 @@ total_processors = 1001
 TERMINATE = 0
 SIM_DATA = 1
 WAIT = 2
+SIM_FAILED = 3
 #PROCESS_COMPLETE
 lmbd_list = json.load(open('lambdas.json', 'r'))
 running_sims = {} 
@@ -80,7 +81,7 @@ def update_file():
     tag = status.Get_tag()
     rnk = status.Get_source()
      
-    if tag == SIM_DATA:
+    if tag == SIM_DATA or tag == SIM_FAILED:
         #data = grps[rnk].create_dataset(str(rnk), data=data)
         #npdata = data.dataframe
         f = h5py.File(sim_data_location(), 'a')
@@ -118,6 +119,16 @@ def update_file():
         else:
             req = comm.send(None, dest = rnk, tag=TERMINATE)
 
+        if tag == SIM_FAILED:
+            with open('failed_sims.json','w+') as f:
+                failed = json.load(f)
+                failed.append(data)
+                json.dump(failed, f)
+                #completed = json.dump(completed, f)
+
+        
+
+
 
 def setup_hdf5():
     f = h5py.File(sim_data_location(), 'w')
@@ -153,51 +164,58 @@ def get_remaining_sims():
 def start_sim():
     print('Starting Sim Rank = {0}'.format(rank))
     tag = WAIT
-    base_path = Path('/project/umd_lance_fiondella')
-    output_path = base_path / 'sumo_output'
-    config_path = base_path / 'config'
-    scenario_path = '/home/vs57d/LuxScenario/scenario/'
+    
 
     while tag != TERMINATE:
         status = MPI.Status()
         data = comm.recv(status = status)
         tag = status.Get_tag()
         if tag == SIM_DATA:
-            sim, lmbd = data
-            net_graph = Graph()
-        
-            #completed = json.load(open('completed_sims.json'))
-            for edge in network.getEdges():
-                net_graph.addEdge(edge.getFromNode().getID(), edge.getToNode().getID(), edge.getID())
-        
-            #chunks = [edgeIDs[i::total_processors-1] for i in range(total_processors-1)]
-            #chunks = [remaining_sims()[i::total_processors] for i in range(total_processors)]
-            #current_chunk = chunks[rank]
-            #for sim, lmbd in current_chunk:
-            _, times, edge = sim.split('/')
-            start_time, end_time = times.split('_')
-            start_time, end_time = int(start_time), int(end_time)
-            filename = ''
-            shutil.copy(scenario_path+'dua.actuated.sumocfg', str(config_path / 'dua.actuated_{}.sumocfg'.format(rank)))
-            shutil.copy(scenario_path+'vtypes.add.xml', str(config_path / 'vtypes.add_{}.xml'.format(rank)))
-            shutil.copy(scenario_path+'busstops.add.xml', str(config_path / 'busstops.add_{}.xml'.format(rank)))
-            shutil.copy(scenario_path+'lust.poly.xml', str(config_path / 'lust.poly_{}.xml'.format(rank)))
-            shutil.copy(scenario_path+'tll.static.xml', str(config_path / 'tll.static_{}.xml'.format(rank)))
-
             try:
-                ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
-                ss.run()
-            except Exception as e:
-                print("Could not start simulation. Trying again. Exception: {}".format(e))
-                time.sleep(10)
-                traci.close()
-                ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
-                ss.run()
+                setup_and_run(data)
+            except:
+                req1 = comm.send(data, dest=total_processors-1, tag=SIM_FAILED)
             tag = WAIT        
         elif tag == TERMINATE:
             print("Terminate tag received, exiting.")    
     #req2 = comm.send(True, dest=total_processors-1, tag=PROCESS_COMPLETE)
 
+
+def setup_and_run(data):
+    base_path = Path('/project/umd_lance_fiondella')
+    output_path = base_path / 'sumo_output'
+    config_path = base_path / 'config'
+    scenario_path = '/home/vs57d/LuxScenario/scenario/'
+    sim, lmbd = data
+    net_graph = Graph()
+
+    #completed = json.load(open('completed_sims.json'))
+    for edge in network.getEdges():
+        net_graph.addEdge(edge.getFromNode().getID(), edge.getToNode().getID(), edge.getID())
+
+    #chunks = [edgeIDs[i::total_processors-1] for i in range(total_processors-1)]
+    #chunks = [remaining_sims()[i::total_processors] for i in range(total_processors)]
+    #current_chunk = chunks[rank]
+    #for sim, lmbd in current_chunk:
+    _, times, edge = sim.split('/')
+    start_time, end_time = times.split('_')
+    start_time, end_time = int(start_time), int(end_time)
+    filename = ''
+    shutil.copy(scenario_path+'dua.actuated.sumocfg', str(config_path / 'dua.actuated_{}.sumocfg'.format(rank)))
+    shutil.copy(scenario_path+'vtypes.add.xml', str(config_path / 'vtypes.add_{}.xml'.format(rank)))
+    shutil.copy(scenario_path+'busstops.add.xml', str(config_path / 'busstops.add_{}.xml'.format(rank)))
+    shutil.copy(scenario_path+'lust.poly.xml', str(config_path / 'lust.poly_{}.xml'.format(rank)))
+    shutil.copy(scenario_path+'tll.static.xml', str(config_path / 'tll.static_{}.xml'.format(rank)))
+
+    try:
+        ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
+        ss.run()
+    except Exception as e:
+        print("Could not start simulation. Trying again. Exception: {}".format(e))
+        time.sleep(10)
+        traci.close()
+        ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
+        ss.run()
 
 if __name__=="__main__":
     start()
