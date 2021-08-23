@@ -37,7 +37,7 @@ class SumoSim():
                         "--additional-files",
                         """{1}/vtypes.add_{0}.xml, {1}/busstops.add_{0}.xml, {1}/lust.poly_{0}.xml, {1}/tll.static_{0}.xml, {1}/additional_{0}.xml""".format(rank, str(self.config_path)),
                         ]
-        print('RUNNING COMMAND: {0}'.format(self.SUMOCMD), file=sys.stderr)
+        print('RUNNING COMMAND: {0}'.format(self.SUMOCMD), file=sys.stderr, flush=True)
         #print("*********************************************************")
         #print("Simulation Details: \n Disrupted link: {} \n Lambda: {} \n Start - End time: {} - {}".format(disrupted, lmbd, start_time, end_time))
         #print("Initializing")
@@ -102,7 +102,7 @@ class SumoSim():
         if disruptedEdge.getID() in min_lambda:
             reroute_edges = self.net_graph.getSubnet(disruptedEdge, min_lambda[disruptedEdge.getID()])
         else:
-            print('Edge {0} not found in min_lambda'.format(disruptedEdge.getID()))
+            print('Edge {0} not found in min_lambda'.format(disruptedEdge.getID()), flush=True)
             to_node = disruptedEdge.getToNode()
             from_node = disruptedEdge.getFromNode()
             dests = [edge.getID() for edge in list(to_node.getIncoming())] + \
@@ -198,11 +198,11 @@ class SumoSim():
         req1 = comm.send(df, dest=self.writer, tag=SIM_DATA)
         
         
-        print("Process {} starting closed file, now deleting".format(rank), file=sys.stderr)
+        print("Process {} starting closed file, now deleting".format(rank), file=sys.stderr, flush=True)
         os.remove(self.vehroutes_path)
         os.remove('/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml'.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
 
-        print("Process {} deleted file, exiting".format(rank), file=sys.stderr)
+        print("Process {} deleted file, exiting".format(rank), file=sys.stderr, flush=True)
 
     def setup_sim(self):
         with open('vehroutes.json', 'r') as f:

@@ -43,12 +43,12 @@ def start():
 
 def start_writer():
     """ Setup writer process """
-    print('Setting up writer')
+    print('Setting up writer', flush=True)
     setup_hdf5()
     init_sims()
     
     while len(running_sims) > 0 or len(remaining_sims) > 0:
-        print("Writer waiting for results. Running Sims: {} Remaining Sims: {}".format(len(running_sims), len(remaining_sims)))
+        print("Writer waiting for results. Running Sims: {} Remaining Sims: {}".format(len(running_sims), len(remaining_sims)), flush=True)
         #if no_space():
         #    send_file()
         #    print("No More Space!")
@@ -72,7 +72,7 @@ def sim_data_location():
     return '/project/umd_lance_fiondella/sim_data_{}.h5'.format(current_hdf)
 
 def update_file():
-    print("Writer waiting for message")
+    print("Writer waiting for message", flush=True)
     status = MPI.Status()
     #data = bytearray(1<<27) 
     #req = comm.irecv()
@@ -91,7 +91,7 @@ def update_file():
                       data.start_time, 
                       data.end_time, 
                       data.edge, 
-                      type(data.get_dataframe()), data.get_dataframe().shape))
+                      type(data.get_dataframe()), data.get_dataframe().shape), flush=True)
         group_name = '/lux_scenario/{}_{}/{}'.format(data.start_time, data.end_time, data.edge)
         group = f.require_group(group_name)
         dataset_name = group_name + '/{}'.format(data.lmbd)
@@ -162,7 +162,7 @@ def get_remaining_sims():
 
 
 def start_sim():
-    print('Starting Sim Rank = {0}'.format(rank))
+    print('Starting Sim Rank = {0}'.format(rank), flush=True)
     tag = WAIT
     
 
@@ -211,7 +211,7 @@ def setup_and_run(data):
         ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
         ss.run()
     except Exception as e:
-        print("Could not start simulation. Trying again. Exception: {}".format(e))
+        print("Could not start simulation. Trying again. Exception: {}".format(e), flush=True)
         time.sleep(10)
         traci.close()
         ss = SumoSim(edge, lmbd, start_time, end_time, filename, rank, net_graph, total_processors-1)
