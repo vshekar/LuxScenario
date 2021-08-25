@@ -12,6 +12,7 @@ import traci
 import shutil
 import datetime
 from pathlib import Path
+from traci.exceptions import FatalTraCIError
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -173,8 +174,9 @@ def start_sim():
         if tag == SIM_DATA:
             #try:
             setup_and_run(data)
-            #except:
-            #    req1 = comm.send(data, dest=total_processors-1, tag=SIM_FAILED)
+            #except FatalTraCIError:
+            #    print
+            #req1 = comm.send(data, dest=total_processors-1, tag=SIM_FAILED)
             tag = WAIT        
         elif tag == TERMINATE:
             print("Terminate tag received, exiting.")    
