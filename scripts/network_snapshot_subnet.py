@@ -195,14 +195,22 @@ class SumoSim():
         sys.stderr.write("Process {} sending data".format(rank))
         print("Process {} sending data. Dataframe shape: {}"
               .format(rank, df.get_dataframe().shape))
-        req1 = comm.send(df, dest=self.writer, tag=SIM_DATA)
-        
         
         print("Process {} starting closed file, now deleting".format(rank), file=sys.stderr, flush=True)
         os.remove(self.vehroutes_path)
-        os.remove('/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml'.format(self.disrupted, self.lmbd, self.start_time, self.end_time))
+        edge_data_path = '/project/umd_lance_fiondella/sumo_output/edgeData_{0}_{1}_{2}_{3}.xml'.format(self.disrupted, self.lmbd, self.start_time, self.end_time)
+        os.remove(edge_data_path)
+
+        vehroute_path = Path(self.vehroutes_path)
+        if vehroute_path.exists():
+            vehroute_path.unlink()
+        edge_data_path = Path(edge_data_path)
+        if edge_data_path.exists():
+            edge_data_path.unlink()
+
 
         print("Process {} deleted file, exiting".format(rank), file=sys.stderr, flush=True)
+        req1 = comm.send(df, dest=self.writer, tag=SIM_DATA)
 
     def setup_sim(self):
         with open('vehroutes.json', 'r') as f:
