@@ -64,9 +64,13 @@ def init_sims():
     global remaining_sims
     remaining_sims = get_remaining_sims()
     for i in range(total_processors-1):
-       sim_data = remaining_sims.pop()
-       req = comm.send(sim_data, dest=i, tag=SIM_DATA)
-       running_sims[i] = sim_data
+        sim_data = remaining_sims.pop()
+        try:
+            req = comm.send(sim_data, dest=i, tag=SIM_DATA)
+        except MPI.Exception as e:
+            print(e, file=sys.stderr, flush=True)
+            continue
+        running_sims[i] = sim_data
     #return remaining_sims, running_sims
 
 
