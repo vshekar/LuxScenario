@@ -38,7 +38,6 @@ remaining_sims = []
 
 
 def start():
-    print('Starting with {} processors'.format(total_processors), flush=True)
     if rank == total_processors-1:
         start_writer()
     else:
@@ -46,7 +45,8 @@ def start():
 
 def start_writer():
     """ Setup writer process """
-    print('Setting up writer', flush=True)
+    print('Setting up writer at rank: {}'.format(rank), flush=True)
+    print('Starting with {} processors'.format(total_processors), flush=True)
     setup_hdf5()
     init_sims()
     
