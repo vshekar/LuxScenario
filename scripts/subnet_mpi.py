@@ -13,6 +13,7 @@ import shutil
 import datetime
 from pathlib import Path
 from traci.exceptions import FatalTraCIError
+import sys
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -37,6 +38,7 @@ remaining_sims = []
 
 
 def start():
+    print('Starting with {} processors'.format(total_processors), flush=True)
     if rank == total_processors-1:
         start_writer()
     else:
@@ -222,4 +224,5 @@ def setup_and_run(data):
         ss.run()
 
 if __name__=="__main__":
+    total_processors = int(sys.argv[1])
     start()
