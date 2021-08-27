@@ -224,5 +224,6 @@ def setup_and_run(data):
         ss.run()
 
 if __name__=="__main__":
+    #global total_processors
     total_processors = int(sys.argv[1])
     start()
